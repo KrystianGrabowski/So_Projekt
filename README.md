@@ -1,4 +1,3 @@
-Wstępna specyfikacja
 W swoim projekcie chciałbym zaimplementować część biblioteki do obsługi wątków z semaforami. Moja implementacja będzie zawierać podstawowe funkcje umożliwiające
 obsługę wielu wątków. W jej skład będą wchodzić:
 
