@@ -1,5 +1,5 @@
 W swoim projekcie chciałbym zaimplementować część biblioteki do obsługi wątków z semaforami. Moja implementacja będzie zawierać podstawowe funkcje umożliwiające
-obsługę wielu wątków. W jej skład będą wchodzić:
+obsługę wielu wątków. W jej skład będą wchodzić m.in.
 
 1) thread_create - funkcja tworząca nowy wątek
 2) thread_join - funkcja czekająca na zakończenie wykonywania wątku
