@@ -1,5 +1,5 @@
 projekt.o: projekt.cpp
- 	g++ -c projekt.cpp -Wall -fpic
+	g++ -std=c++0x projekt.cpp -o projekt.o
 
-projekt.os: projekt.o
-	g++ -o libprojekt.so projekt.o -shared
+run: projekt.o
+	./projekt.o
