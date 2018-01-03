@@ -1,15 +1,18 @@
 #include <iostream>
-//#include <ucontext.h>
+#include <ucontext.h>
 #include <queue>
 #include <functional>
+#include <unistd.h>
+
 //#include "projekt.h"
+#define MEMORI 16384
 
-
-std::queue<std::function<void()>> functions;
-
+ucontext_t mainf, new_context, new_context2;
 
 void example_f1(){
     std::cout << "func1" << std::endl;
+    sleep(3);
+    swapcontext(&new_context, &mainf);
 }
 void example_f2(){
     std::cout << "func2" << std::endl;
@@ -18,23 +21,25 @@ void example_f3(){
     std::cout << "func3" << std::endl;
 }
 
-void acc( void (*f) () ){
-    functions.push(*f);
-}
+int thread_create(void (*f) ()){
+    getcontext(&new_context);
+    new_context.uc_link = 0;
+    new_context.uc_stack.ss_sp = malloc(MEMORI);
+    new_context.uc_stack.ss_size = MEMORI;
+    new_context.uc_stack.ss_flags = 0;
 
-void exec(){
-    functions.front()();
-    functions.pop();
-    functions.front()();
-    functions.pop();
-    functions.front()();
-
+    makecontext(&new_context, f, 0);
+    return 0;
 }
 
 int main(){
-    acc(&example_f1);
-    acc(&example_f2);
-    acc(&example_f3);
-    exec();
+
+    thread_create(&example_f1);
+    swapcontext(&mainf, &new_context);
+
+
+    std::cout << "Control_bk" << std::endl;
+    sleep(3);
+
     return 0;
 }
