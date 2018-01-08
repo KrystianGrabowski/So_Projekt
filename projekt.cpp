@@ -6,13 +6,15 @@
 //#include "projekt.h"
 #define MEMORI 16384
 
-//std::queue <functionptr> threads;
-
 ucontext_t mainf, new_context, new_context2;
+struct my_thread{
+    ucontext_t context;
+};
+
+std::queue <my_thread> threads;
 
 void example_f1(){
     printf("func1\n");
-    sleep(3);
     swapcontext(&new_context, &new_context2);
     printf("endf1\n");
 }
@@ -24,26 +26,18 @@ void example_f2(){
 }
 
 int thread_create(void (*f) ()){
-    getcontext(&new_context);
-    new_context.uc_link = &mainf;
-    new_context.uc_stack.ss_sp = malloc(MEMORI);
-    new_context.uc_stack.ss_size = MEMORI;
-    new_context.uc_stack.ss_flags = 0;
 
+    my_thread thread0;
+    getcontext(&thread0.context);
+    thread0.context.uc_link = &mainf;
+    thread0.context.uc_stack.ss_sp = malloc(MEMORI);
+    thread0.context.uc_stack.ss_size = MEMORI;
+    thread0.context.uc_stack.ss_flags = 0;
     makecontext(&new_context, f, 0);
-    return 0;
-}
-int thread_create2(void (*f) ()){
-    getcontext(&new_context2);
-    new_context2.uc_link = &new_context;
-    new_context2.uc_stack.ss_sp = malloc(MEMORI);
-    new_context2.uc_stack.ss_size = MEMORI;
-    new_context2.uc_stack.ss_flags = 0;
-
-    makecontext(&new_context2, f, 0);
-    printf("TEST\n");
+    threads.push(thread0);
 
     return 0;
+
 }
 
 void schedule(){
@@ -58,10 +52,7 @@ int join(){
 int main(){
 
     thread_create(&example_f1);
-    thread_create2(&example_f2);
-    swapcontext(&mainf, &new_context2);
-    printf("Control_bk\n");
-    sleep(3);
-
+    thread_create(&example_f2);
+    printf("CTRL");
     return 0;
 }
