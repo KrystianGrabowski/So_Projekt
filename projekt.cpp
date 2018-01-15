@@ -1,6 +1,6 @@
 #include <iostream>
 #include <ucontext.h>
-#include <queue>
+#include <vector>
 #include <unistd.h>
 
 //#include "projekt.h"
@@ -10,8 +10,8 @@ struct my_thread{
     ucontext_t context;
 };
 my_thread maincontext, thread_init;
-
-std::queue <my_thread> threads;
+int size = 0;
+std::vector <my_thread> threads;
 
 void example_f1(){
 
@@ -30,7 +30,7 @@ int thread_create(void (*f) ()){
     thread0.context.uc_stack.ss_size = MEMORI;
     thread0.context.uc_stack.ss_flags = 0;
     makecontext(&thread0.context, f, 0);
-    threads.push(thread0);
+    threads.push_back(thread0);
 
     return 0;
 
@@ -38,17 +38,14 @@ int thread_create(void (*f) ()){
 
 void schedule(){
 
-    my_thread threadsave, threadnext;
-
-
-    threadnext = threads.front();
-    threads.pop();
-
-    getcontext(&threadsave.context);
-    threads.push(threadsave);
-
-    setcontext(&threadnext.context);
-
+    size++;
+    if (size == threads.size()){
+        size = 0;
+        swapcontext(&threads[threads.size() -1].context, &threads[0].context);
+    }
+    else{
+        swapcontext(&threads[size - 1].context, &threads[size].context);
+    }
 
 }
 
@@ -64,13 +61,19 @@ void funct_test1(){
     printf("print_test3\n");
     schedule();
 }
-int main(){
+void funct_test2(){
+    printf("print_test4\n");
+    schedule();
+    printf("print_test5\n");
+    schedule();
+    printf("print_test6\n");
+    schedule();
+}
 
+int main(){
     thread_create(&funct_test1);
-    thread_create(&funct_test1);
-    thread_init = threads.front();
-    threads.pop();
-    swapcontext(&maincontext.context, &thread_init.context);
+    thread_create(&funct_test2);
+    swapcontext(&maincontext.context, &threads[size].context);
     printf("Main control");
     return 0;
 }
