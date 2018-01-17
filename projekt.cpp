@@ -44,7 +44,6 @@ void schedule(){
 
     while(threads[i].end == 1 && i != j){
         i++;
-
         if (i >= threads.size()){
             i = 0;
         }
@@ -55,22 +54,25 @@ void schedule(){
 
 }
 
-int join(){
-
-    return 0;
-}
-
 void done_f(){
-    printf("test");
+    printf("Finisher\n");
     threads[size].end = 1;
     schedule();
+}
+
+int join(int number){
+
+    while(threads[number].end == 0){
+        schedule();
+    }
+    return 0;
 }
 
 
 void funct_test1(){
     printf("print_test1\n");
     schedule();
-    printf("print_test2\n");
+    printf("FUNC1 end\n");
     schedule();
 }
 
@@ -79,16 +81,16 @@ void funct_test2(){
     schedule();
     printf("print_test5\n");
     schedule();
-    printf("print_test6\n");
+    printf("FUNC2 end\n");
     schedule();
 }
 
 void funct_test3(){
-    printf("print_test11\n");
-    schedule();
-    printf("print_test12\n");
-    schedule();
-    printf("print_test13\n");
+    for (int i = 0; i < 1000; i++){
+        printf("Funckja 3 %d\n", i);
+        schedule();
+    }
+    printf("FUNC3 end");
     schedule();
 }
 
@@ -109,6 +111,10 @@ int main(){
     threads.push_back(maincontext);
     swapcontext(&threads.back().context, &threads[size].context); //&threads.back().context
 
-    printf("Main control");
+    printf("Main control\n");
+    //join(0);
+    //join(1);
+    join(2);
+    printf("Main end\n");
     return 0;
 }
