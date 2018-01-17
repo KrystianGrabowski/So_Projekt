@@ -42,13 +42,11 @@ void schedule(){
         j = size;
     }
 
-    while(threads[i].end == 1){
+    while(threads[i].end == 1 && i != j){
+        i++;
 
-        if (i >= threads.size() - 1){
+        if (i >= threads.size()){
             i = 0;
-        }
-        if (i == j){
-            break;
         }
 
     }
@@ -85,6 +83,16 @@ void funct_test2(){
     schedule();
 }
 
+void funct_test3(){
+    printf("print_test11\n");
+    schedule();
+    printf("print_test12\n");
+    schedule();
+    printf("print_test13\n");
+    schedule();
+}
+
+
 int main(){
 
     getcontext(&finisher);
@@ -94,10 +102,12 @@ int main(){
     finisher.uc_stack.ss_flags = 0;
     makecontext(&finisher, done_f, 0);
 
-
     thread_create(&funct_test1);
     thread_create(&funct_test2);
-    swapcontext(&maincontext.context, &threads[size].context);
+    thread_create(&funct_test3);
+
+    threads.push_back(maincontext);
+    swapcontext(&threads.back().context, &threads[size].context); //&threads.back().context
 
     printf("Main control");
     return 0;
