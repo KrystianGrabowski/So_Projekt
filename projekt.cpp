@@ -12,72 +12,54 @@ struct my_thread{
 };
 ucontext_t finisher;
 my_thread maincontext;
-bool main_thread_ex = false;
-bool init_thread = false;
 int size = 0;
-int curr_thread = 0;
+bool FINISHER_INIT = false;
+bool MAIN_INIT = false;
 std::vector <my_thread> threads;
 
 
 
 void schedule(){
-
-    if (!main_thread_ex){
-
-        threads.push_back(maincontext);
-        main_thread_ex = true;
-        threads.back().end = 0;
-        swapcontext(&threads.back().context, &threads[curr_thread].context);
-
-
+    int i,j;
+    j = size;
+    if (size < threads.size() - 1){
+        i = size + 1;
     }
     else{
-        int i,j;
-        if (curr_thread + 1 < threads.size()){
-            i = curr_thread + 1;
-            j = curr_thread;
-        }
-        else{
-            i = 0;
-            j = curr_thread;
-        }
-
-        while(threads[i].end == 1 && i != j){
-        i++;
-
-            if (i >= threads.size()){
-                i = 0;
-            }
-
-        }
-
-        curr_thread = i;
-        printf("DD %d %d", j, curr_thread);
-        swapcontext(&threads[j].context, &threads[curr_thread].context);
+        i = 0;
     }
+
+    while(threads[i].end == 1 && i != j){
+        i++;
+        if (i >= threads.size()){
+            i = 0;
+        }
+
+    }
+    size = i;
+    swapcontext(&threads[j].context, &threads[size].context);
+
 }
 
 void done_f(){
-
     printf("Finisher\n");
-    threads[curr_thread].end = 1;
+    threads[size].end = 1;
     schedule();
-
 }
 
 int thread_create(void (*f) ()){
 
-    if (!init_thread){
-        printf("dsad");
+    if (FINISHER_INIT == false){
+
         getcontext(&finisher);
         finisher.uc_link = 0;
         finisher.uc_stack.ss_sp = malloc(MEMORI);
         finisher.uc_stack.ss_size = MEMORI;
         finisher.uc_stack.ss_flags = 0;
         makecontext(&finisher, done_f, 0);
-        init_thread = true;
-    }
+        FINISHER_INIT = true;
 
+    }
     my_thread thread0;
     getcontext(&thread0.context);
     thread0.context.uc_link = &finisher;
@@ -87,19 +69,19 @@ int thread_create(void (*f) ()){
     makecontext(&thread0.context, f, 0);
     thread0.end = 0;
     threads.push_back(thread0);
-    size++;
+
     return 0;
 
 }
 
+int join(int number){
 
-int thread_join(int number){
-
-    while(threads[number].end == 0){
+    while(threads[number].end != 1){
         schedule();
     }
     return 0;
 }
+
 
 
 void funct_test1(){
@@ -107,8 +89,6 @@ void funct_test1(){
     schedule();
     printf("FUNC1 end\n");
     schedule();
-
-
 }
 
 void funct_test2(){
@@ -129,18 +109,33 @@ void funct_test3(){
     schedule();
 }
 
+void threads_start(){
+    my_thread thread0;
+    getcontext(&thread0.context);
+    thread0.context.uc_link = 0;
+    thread0.context.uc_stack.ss_sp = malloc(MEMORI);
+    thread0.context.uc_stack.ss_size = MEMORI;
+    thread0.context.uc_stack.ss_flags = 0;
+    thread0.end = 0;
+    threads.push_back(thread0);
+    swapcontext(&threads.back().context, &threads[size].context);
+}
 
 int main(){
+
+
 
     thread_create(&funct_test1);
     thread_create(&funct_test2);
     thread_create(&funct_test3);
-    schedule();
+
+    threads_start();
+
+
     printf("Main control\n");
-    //threads.pop_back();
-    thread_join(0);
-    //thread_join(1);
-    //thread_join(2);
+    //join(0);
+    //join(1);
+    join(2);
     printf("Main end\n");
     return 0;
 }
