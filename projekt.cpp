@@ -21,11 +21,12 @@ std::vector <my_thread> threads;
 
 
 void schedule(){
-    printf("SHR2\n");
+
     if (!main_thread_ex){
 
         threads.push_back(maincontext);
         main_thread_ex = true;
+        threads.back().end = 0;
         swapcontext(&threads.back().context, &threads[curr_thread].context);
 
 
@@ -51,7 +52,7 @@ void schedule(){
         }
 
         curr_thread = i;
-        printf("SHR3 %d %d\n", curr_thread, j);
+        printf("DD %d %d", j, curr_thread);
         swapcontext(&threads[j].context, &threads[curr_thread].context);
     }
 }
@@ -67,9 +68,9 @@ void done_f(){
 int thread_create(void (*f) ()){
 
     if (!init_thread){
-
+        printf("dsad");
         getcontext(&finisher);
-        finisher.uc_link = NULL;
+        finisher.uc_link = 0;
         finisher.uc_stack.ss_sp = malloc(MEMORI);
         finisher.uc_stack.ss_size = MEMORI;
         finisher.uc_stack.ss_flags = 0;
@@ -122,7 +123,6 @@ void funct_test2(){
 void funct_test3(){
     for (int i = 0; i < 1000; i++){
         printf("Funckja 3 %d\n", i);
-        printf("SHR\n");
         schedule();
     }
     printf("FUNC3 end");
