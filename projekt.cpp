@@ -12,7 +12,7 @@ struct my_thread{
 };
 ucontext_t finisher;
 my_thread maincontext;
-int size = 0;
+int curr = 0;
 bool FINISHER_INIT = false;
 bool MAIN_INIT = false;
 std::vector <my_thread> threads;
@@ -20,31 +20,47 @@ std::vector <my_thread> threads;
 
 
 void schedule(){
-    int i,j;
-    j = size;
-    if (size < threads.size() - 1){
-        i = size + 1;
-    }
-    else{
-        i = 0;
+    if (MAIN_INIT == false){
+
+        my_thread thread0;
+        thread0.context.uc_link = 0;
+        thread0.context.uc_stack.ss_sp = malloc(MEMORI);
+        thread0.context.uc_stack.ss_size = MEMORI;
+        thread0.context.uc_stack.ss_flags = 0;
+        thread0.end = 0;
+        threads.push_back(thread0);
+        MAIN_INIT = true;
+        swapcontext(&threads.back().context, &threads[curr].context);
     }
 
-    while(threads[i].end == 1 && i != j){
-        i++;
-        if (i >= threads.size()){
-            i = 0;
+    else{
+
+        int old;
+        old = curr;
+
+        if (curr < threads.size() - 1){
+            curr = curr + 1;
+        }
+        else{
+            curr = 0;
         }
 
+        while(threads[curr].end == 1 && curr != old){
+            curr++;
+            if (curr >= threads.size()){
+                curr = 0;
+            }
+        }
+        swapcontext(&threads[old].context, &threads[curr].context);
     }
-    size = i;
-    swapcontext(&threads[j].context, &threads[size].context);
 
 }
 
 void done_f(){
-    printf("Finisher\n");
-    threads[size].end = 1;
+
+    threads[curr].end = 1;
     schedule();
+
 }
 
 int thread_create(void (*f) ()){
@@ -109,32 +125,24 @@ void funct_test3(){
     schedule();
 }
 
-void threads_start(){
-    my_thread thread0;
-    getcontext(&thread0.context);
-    thread0.context.uc_link = 0;
-    thread0.context.uc_stack.ss_sp = malloc(MEMORI);
-    thread0.context.uc_stack.ss_size = MEMORI;
-    thread0.context.uc_stack.ss_flags = 0;
-    thread0.end = 0;
-    threads.push_back(thread0);
-    swapcontext(&threads.back().context, &threads[size].context);
+void funct_test4(){
+    for (int i = 0; i < 1000; i++){
+        printf("Funckja 4 %d\n", i);
+        schedule();
+    }
+    printf("FUNC4 end");
+    schedule();
 }
 
 int main(){
 
-
-
-    thread_create(&funct_test1);
+    thread_create(&funct_test4);
     thread_create(&funct_test2);
     thread_create(&funct_test3);
 
-    threads_start();
-
-
     printf("Main control\n");
-    //join(0);
-    //join(1);
+    join(0);
+    join(1);
     join(2);
     printf("Main end\n");
     return 0;
