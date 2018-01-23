@@ -102,19 +102,36 @@ int find_in_vector(int id_t){
         }
         i++;
     }
-    return 0;
+    return -1;
 }
 
-int join(int number){
-
-    while(threads[find_in_vector(number)].end != 1){
-        schedule();
+int join(int id){
+    int i = find_in_vector(id);
+    if (i != -1){
+        while(threads[i].end != 1){
+            schedule();
+        }
     }
     return 0;
 }
 
-//int thread_wait(){}
-//int thread_signal(){}
+int thread_wait(int id){
+
+    int i = find_in_vector(id);
+    if (i != -1){
+        threads[i].lock = 1;
+    }
+    return 0;
+
+}
+int thread_signal(int id){
+
+    int i = find_in_vector(id);
+    if (i != -1){
+        threads[i].lock = 0;
+    }
+    return 0;
+}
 
 void funct_test1(){
     printf("print_test1\n");
@@ -135,7 +152,10 @@ void funct_test2(){
 void funct_test3(){
     for (int i = 0; i < 1000; i++){
         if (i == 900){
-            threads[0].lock = 1;
+            thread_wait(1);
+        }
+        if (i == 950){
+            thread_signal(1);
         }
         printf("Funckja 3 %d\n", i);
         schedule();
@@ -160,7 +180,7 @@ int main(){
     thread_create(&funct_test3, 3);
 
     printf("Main control\n");
-    //join(1);
+    join(1);
     join(2);
     join(3);
     printf("Main end\n");
