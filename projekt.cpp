@@ -10,7 +10,9 @@ struct my_thread{
     ucontext_t context;
     int end;
     int id;
+    int lock;
 };
+
 ucontext_t finisher;
 my_thread maincontext;
 int curr = 0;
@@ -30,13 +32,13 @@ void schedule(){
         thread0.context.uc_stack.ss_flags = 0;
         thread0.end = 0;
         thread0.id = -1;
+        thread0.lock = 0;
         threads.push_back(thread0);
         MAIN_INIT = true;
         swapcontext(&threads.back().context, &threads[curr].context);
     }
 
     else{
-
         int old;
         old = curr;
 
@@ -46,8 +48,7 @@ void schedule(){
         else{
             curr = 0;
         }
-
-        while(threads[curr].end == 1 && curr != old){
+        while((threads[curr].end == 1 || threads[curr].lock == 1) && curr != old ){
             curr++;
             if (curr >= threads.size()){
                 curr = 0;
@@ -87,6 +88,7 @@ int thread_create(void (*f) (), int id_t){
     makecontext(&thread0.context, f, 0);
     thread0.end = 0;
     thread0.id = id_t;
+    thread0.lock = 0;
     threads.push_back(thread0);
 
     return 0;
@@ -132,6 +134,9 @@ void funct_test2(){
 
 void funct_test3(){
     for (int i = 0; i < 1000; i++){
+        if (i == 900){
+            threads[0].lock = 1;
+        }
         printf("Funckja 3 %d\n", i);
         schedule();
     }
@@ -155,7 +160,7 @@ int main(){
     thread_create(&funct_test3, 3);
 
     printf("Main control\n");
-    join(1);
+    //join(1);
     join(2);
     join(3);
     printf("Main end\n");
