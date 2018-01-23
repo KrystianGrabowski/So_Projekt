@@ -9,6 +9,7 @@
 struct my_thread{
     ucontext_t context;
     int end;
+    int id;
 };
 ucontext_t finisher;
 my_thread maincontext;
@@ -28,6 +29,7 @@ void schedule(){
         thread0.context.uc_stack.ss_size = MEMORI;
         thread0.context.uc_stack.ss_flags = 0;
         thread0.end = 0;
+        thread0.id = -1;
         threads.push_back(thread0);
         MAIN_INIT = true;
         swapcontext(&threads.back().context, &threads[curr].context);
@@ -63,7 +65,7 @@ void done_f(){
 
 }
 
-int thread_create(void (*f) ()){
+int thread_create(void (*f) (), int id_t){
 
     if (FINISHER_INIT == false){
 
@@ -84,21 +86,33 @@ int thread_create(void (*f) ()){
     thread0.context.uc_stack.ss_flags = 0;
     makecontext(&thread0.context, f, 0);
     thread0.end = 0;
+    thread0.id = id_t;
     threads.push_back(thread0);
 
     return 0;
 
 }
+int find_in_vector(int id_t){
+    int i = 0;
+    while(i < threads.size()){
+        if (threads[i].id == id_t){
+            return i;
+        }
+        i++;
+    }
+    return 0;
+}
 
 int join(int number){
 
-    while(threads[number].end != 1){
+    while(threads[find_in_vector(number)].end != 1){
         schedule();
     }
     return 0;
 }
 
-
+//int thread_wait(){}
+//int thread_signal(){}
 
 void funct_test1(){
     printf("print_test1\n");
@@ -136,14 +150,14 @@ void funct_test4(){
 
 int main(){
 
-    thread_create(&funct_test4);
-    thread_create(&funct_test2);
-    thread_create(&funct_test3);
+    thread_create(&funct_test4, 1);
+    thread_create(&funct_test2, 2);
+    thread_create(&funct_test3, 3);
 
     printf("Main control\n");
-    join(0);
     join(1);
     join(2);
+    join(3);
     printf("Main end\n");
     return 0;
 }
