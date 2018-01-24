@@ -2,6 +2,10 @@
 #include <ucontext.h>
 #include <vector>
 #include <unistd.h>
+#include <signal.h>
+#include <stdio.h>
+#include <string.h>
+#include <sys/time.h>
 
 //#include "projekt.h"
 #define MEMORI 16384
@@ -11,18 +15,40 @@ struct my_thread{
     int end;
     int id;
     int lock;
+    int time_ft;
 };
 
+int THREAD_time = 1;
 ucontext_t finisher;
 my_thread maincontext;
 int curr = 0;
 bool FINISHER_INIT = false;
 bool MAIN_INIT = false;
+bool TIMER_INIT = false;
 std::vector <my_thread> threads;
+struct sigaction sig;
+struct itimerval ttime;
 
-
+void end_of_time(int signum){
+    printf("WESZEDŁ");
+    THREAD_time = 0;
+}
 
 void schedule(){
+
+    if (TIMER_INIT == false){
+        TIMER_INIT = true;
+        memset (&sig, 0, sizeof (sig));
+        sig.sa_handler = &end_of_time;
+        sigaction (SIGVTALRM, &sig, NULL);
+        ttime.it_value.tv_sec = 0;
+        ttime.it_value.tv_usec = 25000;
+        ttime.it_interval.tv_sec = 0;
+        ttime.it_interval.tv_usec = 25000;
+        setitimer (ITIMER_VIRTUAL, &ttime, NULL);
+
+    }
+
     if (MAIN_INIT == false){
 
         my_thread thread0;
@@ -33,6 +59,7 @@ void schedule(){
         thread0.end = 0;
         thread0.id = -1;
         thread0.lock = 0;
+        thread0.time_ft = 20000;
         threads.push_back(thread0);
         MAIN_INIT = true;
         swapcontext(&threads.back().context, &threads[curr].context);
@@ -66,7 +93,7 @@ void done_f(){
 
 }
 
-int thread_create(void (*f) (), int id_t){
+int thread_create(void (*f) (), int id_t, int tm){
 
     if (FINISHER_INIT == false){
 
@@ -89,6 +116,7 @@ int thread_create(void (*f) (), int id_t){
     thread0.end = 0;
     thread0.id = id_t;
     thread0.lock = 0;
+    thread0.time_ft = tm;
     threads.push_back(thread0);
 
     return 0;
@@ -175,9 +203,9 @@ void funct_test4(){
 
 int main(){
 
-    thread_create(&funct_test4, 1);
-    thread_create(&funct_test2, 2);
-    thread_create(&funct_test3, 3);
+    thread_create(&funct_test4, 1, 25000);
+    thread_create(&funct_test2, 2, 25000);
+    thread_create(&funct_test3, 3, 25000);
 
     printf("Main control\n");
     join(1);
