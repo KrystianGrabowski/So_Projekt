@@ -18,7 +18,7 @@ struct my_thread{
     int time_ft;
 };
 
-int THREAD_time = 1;
+int start = clock();
 ucontext_t finisher;
 my_thread maincontext;
 int curr = 0;
@@ -26,74 +26,58 @@ bool FINISHER_INIT = false;
 bool MAIN_INIT = false;
 bool TIMER_INIT = false;
 std::vector <my_thread> threads;
-struct sigaction sig;
-struct itimerval ttime;
 
-void end_of_time(int signum){
-    printf("WESZEDŁ");
-    THREAD_time = 0;
-}
 
 void schedule(){
 
-    if (TIMER_INIT == false){
-        TIMER_INIT = true;
-        memset (&sig, 0, sizeof (sig));
-        sig.sa_handler = &end_of_time;
-        sigaction (SIGVTALRM, &sig, NULL);
-        ttime.it_value.tv_sec = 0;
-        ttime.it_value.tv_usec = 25000;
-        ttime.it_interval.tv_sec = 0;
-        ttime.it_interval.tv_usec = 25000;
-        setitimer (ITIMER_VIRTUAL, &ttime, NULL);
+    if (clock() - start > threads[curr].time_ft or threads[curr].end == 1){
+        start = clock();
+        if (MAIN_INIT == false){
 
-    }
-
-    if (MAIN_INIT == false){
-
-        my_thread thread0;
-        thread0.context.uc_link = 0;
-        thread0.context.uc_stack.ss_sp = malloc(MEMORI);
-        thread0.context.uc_stack.ss_size = MEMORI;
-        thread0.context.uc_stack.ss_flags = 0;
-        thread0.end = 0;
-        thread0.id = -1;
-        thread0.lock = 0;
-        thread0.time_ft = 20000;
-        threads.push_back(thread0);
-        MAIN_INIT = true;
-        swapcontext(&threads.back().context, &threads[curr].context);
-    }
-
-    else{
-        int old;
-        old = curr;
-
-        if (curr < threads.size() - 1){
-            curr = curr + 1;
+            my_thread thread0;
+            thread0.context.uc_link = 0;
+            thread0.context.uc_stack.ss_sp = malloc(MEMORI);
+            thread0.context.uc_stack.ss_size = MEMORI;
+            thread0.context.uc_stack.ss_flags = 0;
+            thread0.end = 0;
+            thread0.id = -1;
+            thread0.lock = 0;
+            thread0.time_ft = 10;
+            threads.push_back(thread0);
+            MAIN_INIT = true;
+            swapcontext(&threads.back().context, &threads[curr].context);
         }
+
         else{
-            curr = 0;
-        }
-        while((threads[curr].end == 1 || threads[curr].lock == 1) && curr != old ){
-            curr++;
-            if (curr >= threads.size()){
+            int old;
+            old = curr;
+
+            if (curr < threads.size() - 1){
+                curr = curr + 1;
+            }
+            else{
                 curr = 0;
             }
+            while((threads[curr].end == 1 || threads[curr].lock == 1) && curr != old ){
+                curr++;
+                if (curr >= threads.size()){
+                    curr = 0;
+                }
+            }
+            swapcontext(&threads[old].context, &threads[curr].context);
         }
-        swapcontext(&threads[old].context, &threads[curr].context);
+
     }
 
 }
 
-void done_f(){
-
+void finish(){
     threads[curr].end = 1;
     schedule();
 
 }
 
-int thread_create(void (*f) (), int id_t, int tm){
+int thread_create(void (*f) (), int id_t, int time_for_thread){
 
     if (FINISHER_INIT == false){
 
@@ -102,7 +86,7 @@ int thread_create(void (*f) (), int id_t, int tm){
         finisher.uc_stack.ss_sp = malloc(MEMORI);
         finisher.uc_stack.ss_size = MEMORI;
         finisher.uc_stack.ss_flags = 0;
-        makecontext(&finisher, done_f, 0);
+        makecontext(&finisher, finish, 0);
         FINISHER_INIT = true;
 
     }
@@ -116,7 +100,7 @@ int thread_create(void (*f) (), int id_t, int tm){
     thread0.end = 0;
     thread0.id = id_t;
     thread0.lock = 0;
-    thread0.time_ft = tm;
+    thread0.time_ft = time_for_thread;
     threads.push_back(thread0);
 
     return 0;
@@ -162,50 +146,50 @@ int thread_signal(int id){
 }
 
 void funct_test1(){
-    printf("print_test1\n");
+    printf("FUN 1.1\n");
     schedule();
-    printf("FUNC1 end\n");
+    printf("FUN1 end\n");
     schedule();
 }
 
 void funct_test2(){
-    printf("print_test4\n");
+    printf("FUN 2.1\n");
     schedule();
-    printf("print_test5\n");
+    printf("FUN 2.1\n");
     schedule();
-    printf("FUNC2 end\n");
+    printf("FUN2 end\n");
     schedule();
 }
 
 void funct_test3(){
-    for (int i = 0; i < 1000; i++){
-        if (i == 900){
+    for (int i = 0; i < 10000; i++){
+        /*if (i == 900){
             thread_wait(1);
         }
         if (i == 950){
             thread_signal(1);
-        }
-        printf("Funckja 3 %d\n", i);
+        }*/
+        printf("FUN 3. %d\n", i);
         schedule();
     }
-    printf("FUNC3 end");
+    printf("FUN3 end\n");
     schedule();
 }
 
 void funct_test4(){
-    for (int i = 0; i < 1000; i++){
-        printf("Funckja 4 %d\n", i);
+    for (int i = 0; i < 10000; i++){
+        printf("FUN 4 %d\n", i);
         schedule();
     }
-    printf("FUNC4 end");
+    printf("FUN4 end\n");
     schedule();
 }
 
 int main(){
 
-    thread_create(&funct_test4, 1, 25000);
-    thread_create(&funct_test2, 2, 25000);
-    thread_create(&funct_test3, 3, 25000);
+    thread_create(&funct_test4, 1, 10);
+    thread_create(&funct_test2, 2, 10);
+    thread_create(&funct_test3, 3, 20);
 
     printf("Main control\n");
     join(1);
