@@ -27,6 +27,14 @@ bool MAIN_INIT = false;
 bool TIMER_INIT = false;
 std::vector <my_thread> threads;
 
+//SEMAPHORE
+
+struct my_semaphore{
+    int SEM;
+    std::vector <int> queue;
+    int id;
+};
+
 
 void schedule(){
 
@@ -162,7 +170,7 @@ void funct_test2(){
 }
 
 void funct_test3(){
-    for (int i = 0; i < 10000; i++){
+    for (int i = 0; i < 500; i++){
         /*if (i == 900){
             thread_wait(1);
         }
@@ -177,19 +185,36 @@ void funct_test3(){
 }
 
 void funct_test4(){
-    for (int i = 0; i < 10000; i++){
+    for (int i = 0; i < 500; i++){
         printf("FUN 4 %d\n", i);
         schedule();
     }
     printf("FUN4 end\n");
     schedule();
 }
+//###################SEMAPHORE#####################
+
+int my_sem_init(int value, int id_s){
+    my_semaphore semaphore0;
+    semaphore0.id = id_s;
+    semaphore0.SEM = value;
+}
+
+int my_sem_wait(my_semaphore sem1){
+    sem1.SEM--;
+}
+
+int my_sem_signal(my_semaphore sem1){
+    sem1.SEM++;
+}
 
 int main(){
 
-    thread_create(&funct_test4, 1, 10);
-    thread_create(&funct_test2, 2, 10);
-    thread_create(&funct_test3, 3, 20);
+    thread_create(&funct_test4, 1, 2);
+    thread_create(&funct_test2, 2, 2);
+    thread_create(&funct_test3, 3, 2);
+
+    my_sem_init(1, 1);
 
     printf("Main control\n");
     join(1);
