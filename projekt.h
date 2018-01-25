@@ -1,4 +1,7 @@
 #include <iostream>
+#include <ucontext.h>
+#include <vector>
+#include <queue>
 
 #define MEMORI 16384
 
@@ -25,7 +28,7 @@ struct my_semaphore{
     int SEM;
     std::queue <int> queue;
 };
-my_semaphore semaphore;
+
 
 
 void schedule();

@@ -8,6 +8,14 @@
 #include <sys/time.h>
 #include <queue>
 #include "projekt.h"
+#include <stdlib.h>
+#include <cstdlib>
+
+int mysliwi, kucharze, zwierzyna, pozywienie;
+int ocalali;
+
+my_semaphore semaphore;
+my_semaphore lock1, lock2;
 
 void schedule(){
 
@@ -170,6 +178,7 @@ void funct_test4(){
 int my_sem_init(int value, my_semaphore *semaphore1){
 
     semaphore1->SEM = value;
+    return 0;
 
 }
 
@@ -182,6 +191,7 @@ int my_sem_wait(my_semaphore *semaphore1){
         //schedule();
 
     }
+    return 0;
 }
 
 int my_sem_signal(my_semaphore *semaphore1){
@@ -193,6 +203,7 @@ int my_sem_signal(my_semaphore *semaphore1){
         semaphore1->queue.pop();
 
     }
+    return 0;
 }
 void semtest1(){
     printf("TEST1\n");
@@ -237,20 +248,163 @@ void semtest1(){
 
 }
 
+///###################SETTLERS##############
+int kostka_rzut(){
+    return (std::rand() % 6) + 1;
+}
 
 
+void polowanie(){
 
+    int mysliwy_rzut = kostka_rzut();
+    schedule();
+    int zwierz_rzut = kostka_rzut();
+    schedule();
+    my_sem_wait(&lock1);
+    schedule();
+    if (mysliwy_rzut > zwierz_rzut) {
+        schedule();
+        zwierzyna++;
+        schedule();
+        printf("Udane polowanie (Z) +1 <zwierzyna {%d}>\n", zwierzyna);
+        schedule();
+    }
+    my_sem_signal(&lock1);
+    schedule();
+
+
+}
+
+void pieczenie(){
+
+    my_sem_wait(&lock1);
+    schedule();
+    if (zwierzyna > 0){
+        schedule();
+        zwierzyna--;
+        schedule();
+        my_sem_signal(&lock1);
+        schedule();
+        int kucharz_rzut = kostka_rzut();
+        schedule();
+        my_sem_wait(&lock1);
+        schedule();
+        pozywienie += kucharz_rzut;
+        schedule();
+        printf("Udane pieczenie (P) +%d <pozywienie {%d}>\n", kucharz_rzut, pozywienie);
+        schedule();
+    }
+    my_sem_signal(&lock1);
+    schedule();
+}
+
+void mysliwy(){
+    for (int dzien = 1; dzien <= 365; dzien++){
+
+        polowanie();
+        schedule();
+        my_sem_wait(&lock1);
+        schedule();
+        if (pozywienie > 0){
+            schedule();
+            pozywienie--;
+            schedule();
+            my_sem_signal(&lock1);
+            schedule();
+            usleep(500);
+            schedule();
+        }
+        else{
+
+            printf("Mysliwy odszedl z wioski !!\n");
+            schedule();
+            ocalali--;
+            schedule();
+            my_sem_signal(&lock1);
+            schedule();
+            break;
+
+        }
+
+    }
+}
+
+void kucharz(){
+    for (int dzien = 1; dzien <= 365; dzien++){
+
+        pieczenie();
+        schedule();
+        my_sem_wait(&lock1);
+        schedule();
+        if (pozywienie > 0 ){
+            schedule();
+            pozywienie--;
+            schedule();
+            my_sem_signal(&lock1);
+            schedule();
+            usleep(500);
+            schedule();
+        }
+        else{
+            printf("Kucharz odszedl z wioski !!\n");
+            schedule();
+            ocalali--;
+            schedule();
+            my_sem_signal(&lock1);
+            schedule();
+            break;
+            schedule();
+        }
+
+    }
+}
+
+int osada(){
+
+    int k, m;
+    srand( time( NULL ) );
+    my_sem_init(1, &lock1);
+    my_sem_init(1, &lock2);
+    mysliwi = 10;
+    kucharze = 10;
+    zwierzyna = 500;
+    pozywienie = 500;
+    ocalali = mysliwi + kucharze;
+
+    int tab_k[kucharze];
+    int tab_m[mysliwi];
+
+    for (k = 0; k < kucharze; k++){
+        thread_create(&kucharz, k, 10);
+    }
+    for (m = 0; m < mysliwi; m++){
+        thread_create(&mysliwy, m + kucharze, 10);
+    }
+
+    for (k = 0; k < kucharze; k++){
+        join(k);
+    }
+    for (m = 0; m < mysliwi; m++){
+        join(m+kucharze);
+    }
+    printf("\nPodsumowanie :\n ocalali = %d \n pozywnie = %d\n", ocalali, pozywienie);
+
+    return 0;
+}
+// ********************************
 int main(){
 
     /*thread_create(&funct_test4, 1, 2);
     thread_create(&funct_test2, 2, 2);
     thread_create(&funct_test3, 3, 2);*/    //TEST1
 
-    thread_create(&semtest1, 1, 10);
+    /*thread_create(&semtest1, 1, 10);
     thread_create(&semtest1, 2, 10);
-    my_sem_init(1, &semaphore);     //TEST2
+    thread_create(&semtest1, 3, 10);
+    my_sem_init(1, &semaphore);  */   //TEST2
 
 
+    osada();
     printf("Main control\n");
     join(1);
     join(2);
