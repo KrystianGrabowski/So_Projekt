@@ -260,18 +260,19 @@ void polowanie(){
     schedule();
     int zwierz_rzut = kostka_rzut();
     schedule();
-    my_sem_wait(&lock1);
-    schedule();
+
     if (mysliwy_rzut > zwierz_rzut) {
+        schedule();
+        my_sem_wait(&lock1);
         schedule();
         zwierzyna++;
         schedule();
         printf("Udane polowanie (Z) +1 <zwierzyna {%d}>\n", zwierzyna);
         schedule();
-    }
-    my_sem_signal(&lock1);
-    schedule();
+        my_sem_signal(&lock1);
+        schedule();
 
+    }
 
 }
 
@@ -287,15 +288,21 @@ void pieczenie(){
         schedule();
         int kucharz_rzut = kostka_rzut();
         schedule();
-        my_sem_wait(&lock1);
+        my_sem_wait(&lock2);
         schedule();
         pozywienie += kucharz_rzut;
         schedule();
         printf("Udane pieczenie (P) +%d <pozywienie {%d}>\n", kucharz_rzut, pozywienie);
         schedule();
+        my_sem_signal(&lock2);
+        schedule();
     }
-    my_sem_signal(&lock1);
-    schedule();
+    else{
+        my_sem_signal(&lock1);
+        schedule();
+    }
+
+
 }
 
 void mysliwy(){
@@ -303,13 +310,13 @@ void mysliwy(){
 
         polowanie();
         schedule();
-        my_sem_wait(&lock1);
+        my_sem_wait(&lock2);
         schedule();
         if (pozywienie > 0){
             schedule();
             pozywienie--;
             schedule();
-            my_sem_signal(&lock1);
+            my_sem_signal(&lock2);
             schedule();
             usleep(500);
             schedule();
@@ -320,9 +327,10 @@ void mysliwy(){
             schedule();
             ocalali--;
             schedule();
-            my_sem_signal(&lock1);
+            my_sem_signal(&lock2);
             schedule();
             break;
+            schedule();
 
         }
 
@@ -334,13 +342,13 @@ void kucharz(){
 
         pieczenie();
         schedule();
-        my_sem_wait(&lock1);
+        my_sem_wait(&lock2);
         schedule();
         if (pozywienie > 0 ){
             schedule();
             pozywienie--;
             schedule();
-            my_sem_signal(&lock1);
+            my_sem_signal(&lock2);
             schedule();
             usleep(500);
             schedule();
@@ -350,7 +358,7 @@ void kucharz(){
             schedule();
             ocalali--;
             schedule();
-            my_sem_signal(&lock1);
+            my_sem_signal(&lock2);
             schedule();
             break;
             schedule();
@@ -367,8 +375,8 @@ int osada(){
     my_sem_init(1, &lock2);
     mysliwi = 10;
     kucharze = 10;
-    zwierzyna = 500;
-    pozywienie = 500;
+    zwierzyna = 10;
+    pozywienie = 5;
     ocalali = mysliwi + kucharze;
 
     int tab_k[kucharze];
