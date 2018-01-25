@@ -7,38 +7,11 @@
 #include <string.h>
 #include <sys/time.h>
 #include <queue>
-
-//#include "projekt.h"
-#define MEMORI 16384
-
-struct my_thread{
-    ucontext_t context;
-    int end;
-    int id;
-    int lock;
-    int time_ft;
-};
-
-int start = clock();
-ucontext_t finisher;
-my_thread maincontext;
-int curr = 0;
-bool FINISHER_INIT = false;
-bool MAIN_INIT = false;
-bool TIMER_INIT = false;
-std::vector <my_thread> threads;
-
-//SEMAPHORE
-
-struct my_semaphore{
-    int SEM;
-    std::queue <int> queue;
-};
-my_semaphore semaphore;
+#include "projekt.h"
 
 void schedule(){
 
-    if (clock() - start > threads[curr].time_ft or threads[curr].end == 1){
+    if (clock() - start > threads[curr].time_ft or threads[curr].end == 1 or threads[curr].lock == 1){
         start = clock();
         if (MAIN_INIT == false){
 
@@ -206,6 +179,7 @@ int my_sem_wait(my_semaphore *semaphore1){
     if(semaphore1->SEM < 0){
         semaphore1->queue.push(threads[curr].id);
         thread_wait(threads[curr].id);
+        //schedule();
 
     }
 }
@@ -233,8 +207,8 @@ void semtest1(){
     schedule();
 
     my_sem_wait(&semaphore);
-    schedule();
 
+    schedule();
     printf("CRITICAL12\n");
     schedule();
     printf("CRITICAL13\n");
@@ -262,16 +236,20 @@ void semtest1(){
 
 
 }
+
+
+
+
 int main(){
 
     /*thread_create(&funct_test4, 1, 2);
     thread_create(&funct_test2, 2, 2);
-    thread_create(&funct_test3, 3, 2);*/
+    thread_create(&funct_test3, 3, 2);*/    //TEST1
 
     thread_create(&semtest1, 1, 10);
     thread_create(&semtest1, 2, 10);
+    my_sem_init(1, &semaphore);     //TEST2
 
-    my_sem_init(1, &semaphore);
 
     printf("Main control\n");
     join(1);
