@@ -8,7 +8,6 @@
 #include <sys/time.h>
 #include <queue>
 
-
 //#include "projekt.h"
 #define MEMORI 16384
 
@@ -36,7 +35,6 @@ struct my_semaphore{
     std::queue <int> queue;
 };
 my_semaphore semaphore;
-
 
 void schedule(){
 
@@ -196,34 +194,32 @@ void funct_test4(){
 }
 //###################SEMAPHORE#####################
 
-int my_sem_init(int value, my_semaphore s){
-    s.SEM = value;
+int my_sem_init(int value, my_semaphore *semaphore1){
+
+    semaphore1->SEM = value;
+
 }
 
-int my_sem_wait(my_semaphore sem1){
-    sem1.SEM--;
-    if (sem1.SEM < 0) {
-        sem1.queue.push(threads[curr].id);
+int my_sem_wait(my_semaphore *semaphore1){
+
+    semaphore1->SEM--;
+    if(semaphore1->SEM < 0){
+        semaphore1->queue.push(threads[curr].id);
         thread_wait(threads[curr].id);
-        schedule();
-    }
 
+    }
 }
 
-int my_sem_signal(my_semaphore sem1){
-    printf("TEST");
-    sem1.SEM++;
-    if (!sem1.queue.empty()){
-        int i = sem1.queue.front();
-        i = find_in_vector(i);
-        sem1.queue.pop();
+int my_sem_signal(my_semaphore *semaphore1){
+
+    semaphore1->SEM++;
+    if(semaphore1->queue.empty() == false){
+        int i = semaphore1->queue.front();
         thread_signal(i);
-        printf("dd");
+        semaphore1->queue.pop();
+
     }
-    //schedule();
 }
-
-
 void semtest1(){
     printf("TEST1\n");
     schedule();
@@ -234,8 +230,11 @@ void semtest1(){
     printf("TEST4\n");
     schedule();
     printf("TEST5\n");
+    schedule();
 
-    //my_sem_wait(semaphore);
+    my_sem_wait(&semaphore);
+    schedule();
+
     printf("CRITICAL12\n");
     schedule();
     printf("CRITICAL13\n");
@@ -245,9 +244,11 @@ void semtest1(){
     printf("CRITICAL15\n");
     schedule();
     printf("CRITICAL16s\n");
+    schedule();
 
-    //my_sem_signal(semaphore);
+    my_sem_signal(&semaphore);
 
+    schedule();
     printf("TEST6\n");
     schedule();
     printf("TEST7\n");
@@ -270,13 +271,12 @@ int main(){
     thread_create(&semtest1, 1, 10);
     thread_create(&semtest1, 2, 10);
 
-    my_sem_init(1, semaphore);
-    std::cout << semaphore.queue.size() << std::endl;
+    my_sem_init(1, &semaphore);
 
     printf("Main control\n");
     join(1);
-    /*join(2);
-    join(3);*/
+    join(2);
+    //join(3);
     printf("Main end\n");
     return 0;
 }
