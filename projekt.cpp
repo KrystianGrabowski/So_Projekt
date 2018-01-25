@@ -14,7 +14,7 @@
 int mysliwi, kucharze, zwierzyna, pozywienie;
 int ocalali;
 
-my_semaphore semaphore;
+my_semaphore semaphore, semaphore1;
 my_semaphore lock1, lock2;
 
 void schedule(){
@@ -214,13 +214,9 @@ void semtest1(){
     schedule();
     printf("TEST4\n");
     schedule();
-    printf("TEST5\n");
-    schedule();
 
     my_sem_wait(&semaphore);
 
-    schedule();
-    printf("CRITICAL12\n");
     schedule();
     printf("CRITICAL13\n");
     schedule();
@@ -234,18 +230,49 @@ void semtest1(){
     my_sem_signal(&semaphore);
 
     schedule();
+    printf("TEST5\n");
+    schedule();
     printf("TEST6\n");
     schedule();
     printf("TEST7\n");
     schedule();
     printf("TEST8\n");
     schedule();
-    printf("TEST9\n");
+}
+
+void semtest2(){
+    printf("TEST1\n");
     schedule();
-    printf("TEST10\n");
+    printf("TEST2\n");
+    schedule();
+    printf("TEST3\n");
+    schedule();
+    printf("TEST4\n");
     schedule();
 
+    my_sem_wait(&semaphore1);
 
+    schedule();
+    printf("##CRITICAL23\n");
+    schedule();
+    printf("##CRITICAL24\n");
+    schedule();
+    printf("##CRITICAL25\n");
+    schedule();
+    printf("##CRITICAL26s\n");
+    schedule();
+
+    my_sem_signal(&semaphore1);
+
+    schedule();
+    printf("TEST5\n");
+    schedule();
+    printf("TEST6\n");
+    schedule();
+    printf("TEST7\n");
+    schedule();
+    printf("TEST8\n");
+    schedule();
 }
 
 ///###################SETTLERS##############
@@ -406,13 +433,14 @@ int main(){
     thread_create(&funct_test2, 2, 2);
     thread_create(&funct_test3, 3, 2);*/    //TEST1
 
-    /*thread_create(&semtest1, 1, 10);
-    thread_create(&semtest1, 2, 10);
+    thread_create(&semtest1, 1, 10);
+    thread_create(&semtest2, 2, 10);
     thread_create(&semtest1, 3, 10);
-    my_sem_init(1, &semaphore);  */   //TEST2
+    thread_create(&semtest2, 4, 10);
+    my_sem_init(1, &semaphore);    //TEST2
+    my_sem_init(1, &semaphore1);
 
-
-    osada();
+    //osada();
     printf("Main control\n");
     join(1);
     join(2);
