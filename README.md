@@ -1,3 +1,5 @@
+# operating-systems-thread-library
+
 W swoim projekcie chciałbym stworzyć własną implementację częśći bibliotek do obsługi wątków. Moja implementacja będzie zawierać podstawowe funkcje umożliwiające
 obsługę wielu wątków. W jej skład mogą wchodzić m.in.
 
